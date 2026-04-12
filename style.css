@@ -12,6 +12,13 @@
   --brand-gold: #e3a535;
   --brand-red-muted: #7f2b33;
   --brand-gold-muted: #8a6a2a;
+  --surface-light: #fffaf6;
+  --surface-light-strong: #fff3e6;
+  --surface-dark: #222222;
+  --text-on-light: #3a2a16;
+  --text-on-dark: #f5ecdd;
+  --text-on-red: #ffffff;
+  --text-on-gold: #2f210e;
 }
 
 /* —— body + fonts —— */
@@ -102,6 +109,7 @@ body {
 .history-list button.active {
   border-color: var(--brand-red);
   background: #fff0f4;
+  color: #4a1320;
 }
 
 .history-list .history-time {
@@ -533,7 +541,8 @@ body.dark-mode .history-list button:hover {
 
 body.dark-mode .history-list button.active {
   border-color: var(--brand-red-muted);
-  background: #332b2d;
+  background: #4b2f35;
+  color: var(--text-on-dark);
 }
 
 body.dark-mode .history-list .history-time {
@@ -785,6 +794,11 @@ body.dark-mode .delete-chat-btn:hover {
   color: #666;
 }
 
+.product-card.selected h3,
+.product-card.selected p {
+  color: #1f1f1f;
+}
+
 /* selected products */
 .selected-products {
   margin: 40px 0;
@@ -845,7 +859,18 @@ body {
 .chatbox,
 .selected-products {
   border-color: var(--brand-red);
-  background: #fffaf6;
+  background: var(--surface-light);
+  color: var(--text-on-light);
+}
+
+.chat-window {
+  border-color: var(--brand-red);
+  background: linear-gradient(
+    180deg,
+    var(--surface-light-strong) 0%,
+    var(--surface-light) 100%
+  );
+  color: var(--text-on-light);
 }
 
 .product-card {
@@ -869,11 +894,21 @@ body {
 .chat-form button,
 .generate-btn {
   background: var(--brand-red);
+  color: var(--text-on-red);
 }
 
 .chat-form button:hover,
 .generate-btn:hover {
   background: var(--brand-gold);
+  color: var(--text-on-gold);
+}
+
+.chat-form button:focus,
+.generate-btn:focus,
+.history-list button:focus,
+.history-list button.active:focus {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
 }
 
 .site-footer a {
@@ -893,7 +928,14 @@ body.dark-mode .search-section select {
 body.dark-mode .chatbox,
 body.dark-mode .selected-products {
   border-color: var(--brand-red-muted);
-  background: #222;
+  background: var(--surface-dark);
+  color: var(--text-on-dark);
+}
+
+body.dark-mode .chat-window {
+  border-color: var(--brand-red-muted);
+  background: linear-gradient(180deg, #2a2425 0%, #1f1b1b 100%);
+  color: var(--text-on-dark);
 }
 
 body.dark-mode .product-card {
@@ -916,12 +958,21 @@ body.dark-mode .chat-form input:focus {
 
 body.dark-mode .chat-form button,
 body.dark-mode .generate-btn {
-  background: #2b2b2b;
-  color: var(--brand-gold-muted);
+  background: var(--brand-red-muted);
+  color: var(--text-on-red);
   border: 1px solid var(--brand-red-muted);
 }
 
 body.dark-mode .chat-form button:hover,
 body.dark-mode .generate-btn:hover {
-  background: #3a3a3a;
+  background: var(--brand-gold-muted);
+  color: var(--text-on-gold);
+}
+
+body.dark-mode .chat-form button:focus,
+body.dark-mode .generate-btn:focus,
+body.dark-mode .history-list button:focus,
+body.dark-mode .history-list button.active:focus {
+  outline: 2px solid var(--brand-gold-muted);
+  outline-offset: 2px;
 }
