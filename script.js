@@ -82,7 +82,26 @@ function updateSelectedProducts() {
     ? `<ul>${selectedNames.map((name) => `<li>${name}</li>`).join("")}</ul>`
     : `<p>No products selected yet.</p>`;
 
+  updateClearSelectionButtonState();
   updateGenerateRoutineButtonState();
+}
+
+/* Keep the clear-selection button disabled when there is nothing to clear */
+function updateClearSelectionButtonState() {
+  if (!clearSelectionButton) {
+    return;
+  }
+
+  const selectedCards = productsContainer.querySelectorAll(
+    ".product-card.selected",
+  );
+  const hasSelectedProducts = selectedCards.length > 0;
+
+  clearSelectionButton.disabled = !hasSelectedProducts;
+  clearSelectionButton.setAttribute(
+    "aria-disabled",
+    String(!hasSelectedProducts),
+  );
 }
 
 /* Enable the Generate Routine button only when at least one product is selected */
@@ -111,15 +130,6 @@ productsContainer.addEventListener("click", (e) => {
   }
 
   card.classList.toggle("selected");
-
-  const isSelected = card.classList.contains("selected");
-  if (isSelected) {
-    card.style.border = "2px solid #7f2b33";
-    card.style.backgroundColor = "#E0F0FF";
-  } else {
-    card.style.border = "";
-    card.style.backgroundColor = "";
-  }
 
   updateSelectedProducts();
 });
@@ -467,6 +477,23 @@ function applyTheme(theme) {
     );
   }
 }
+
+/* Create a button to clear all selected products at once for easier testing and better UX */
+const clearSelectionButton = document.getElementById("clearSelection");
+
+if (clearSelectionButton) {
+  clearSelectionButton.addEventListener("click", () => {
+    const selectedCards = productsContainer.querySelectorAll(
+      ".product-card.selected",
+    );
+    selectedCards.forEach((card) => {
+      card.classList.remove("selected");
+    });
+    updateSelectedProducts();
+  });
+}
+
+updateClearSelectionButtonState();
 
 // Load saved theme preference on page load
 const savedTheme = localStorage.getItem("theme") || "light";
