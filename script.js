@@ -32,6 +32,20 @@ async function getProducts() {
   return cachedProducts;
 }
 
+/* Turn an AI response into a simple bullet list for easier reading */
+function formatResponseAsBullets(responseText) {
+  const lines = responseText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return `<ul>${lines.map((line) => `<li>${line}</li>`).join("")}</ul>`;
+}
+
 /* Create HTML for displaying product cards */
 function displayProducts(products) {
   productsContainer.innerHTML = products
@@ -267,7 +281,9 @@ chatForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    chatWindow.innerHTML += `<p><strong>AI:</strong> ${aiReply}</p>`;
+    chatWindow.innerHTML += `<div><strong>AI:</strong>${formatResponseAsBullets(
+      aiReply,
+    )}</div>`;
     userInputElement.value = "";
   } catch (error) {
     console.error("OpenAI request failed:", error);
@@ -356,7 +372,7 @@ if (generateRoutineButton) {
         return;
       }
 
-      chatWindow.innerHTML = `<p>${aiReply.replace(/\n/g, "<br>")}</p>`;
+      chatWindow.innerHTML = `<div>${formatResponseAsBullets(aiReply)}</div>`;
     } catch (error) {
       console.error("Routine generation failed:", error);
       chatWindow.innerHTML = `<p>Sorry, routine generation failed. Please try again.</p>`;
