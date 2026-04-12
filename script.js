@@ -122,6 +122,9 @@ function updateGenerateRoutineButtonState() {
   );
 }
 
+/* Replace with actual Cloudflare Worker URL when deployed */
+const API_BASE_URL = "https://quiet-night-bc46.lchaker921.workers.dev/";
+
 /* Handle select/unselect on click and apply visual highlight */
 productsContainer.addEventListener("click", (e) => {
   const card = e.target.closest(".product-card");
