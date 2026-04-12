@@ -123,7 +123,8 @@ function updateGenerateRoutineButtonState() {
 }
 
 /* Replace with actual Cloudflare Worker URL when deployed */
-const API_BASE_URL = "https://quiet-night-bc46.lchaker921.workers.dev/";
+const API_BASE_URL =
+  window.API_BASE_URL || "https://quiet-night-bc46.lchaker921.workers.dev/";
 
 /* Send chat-completion requests through Cloudflare Worker so the API key stays server-side */
 async function requestChatCompletion(payload) {
@@ -139,6 +140,13 @@ async function requestChatCompletion(payload) {
 
   if (!contentType.includes("application/json")) {
     const nonJsonResponse = await response.text();
+
+    if (nonJsonResponse.trim() === "Hello World!") {
+      throw new Error(
+        "Your Cloudflare Worker is still returning the default Hello World response. Deploy the worker code, then try again.",
+      );
+    }
+
     throw new Error(
       `Cloudflare Worker returned a non-JSON response: ${nonJsonResponse}`,
     );
