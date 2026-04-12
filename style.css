@@ -585,7 +585,6 @@ body.dark-mode .delete-chat-btn:hover {
   }
 }
 
-
 .page-wrapper {
   width: 90%;
   max-width: 900px;
@@ -825,4 +824,104 @@ body.dark-mode .delete-chat-btn:hover {
 
 .generate-btn i {
   margin-right: 8px;
+}
+
+/* Final theme-safe overrides so legacy blocks keep brand colors */
+body {
+  background: var(--brand-white);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.search-section select {
+  border-color: var(--brand-red);
+}
+
+.search-section select:focus {
+  border-color: var(--brand-gold);
+}
+
+.chatbox,
+.selected-products {
+  border-color: var(--brand-red);
+  background: #fffaf6;
+}
+
+.product-card {
+  border-color: #ecd9c0;
+  background: #fffdfb;
+}
+
+.product-card p,
+.placeholder-message {
+  color: #6d5f4d;
+}
+
+.chat-form input {
+  border-bottom-color: #d6c6ae;
+}
+
+.chat-form input:focus {
+  border-bottom-color: var(--brand-gold);
+}
+
+.chat-form button,
+.generate-btn {
+  background: var(--brand-red);
+}
+
+.chat-form button:hover,
+.generate-btn:hover {
+  background: var(--brand-gold);
+}
+
+.site-footer a {
+  color: var(--brand-red);
+}
+
+.site-footer a:hover {
+  color: var(--brand-gold);
+}
+
+body.dark-mode .search-section select {
+  background: #252525;
+  color: #e0e0e0;
+  border-color: var(--brand-red-muted);
+}
+
+body.dark-mode .chatbox,
+body.dark-mode .selected-products {
+  border-color: var(--brand-red-muted);
+  background: #222;
+}
+
+body.dark-mode .product-card {
+  background: #272727;
+  border-color: #3c3c3c;
+}
+
+body.dark-mode .product-card p,
+body.dark-mode .placeholder-message {
+  color: #bebebe;
+}
+
+body.dark-mode .chat-form input {
+  border-bottom-color: #555;
+}
+
+body.dark-mode .chat-form input:focus {
+  border-bottom-color: var(--brand-gold-muted);
+}
+
+body.dark-mode .chat-form button,
+body.dark-mode .generate-btn {
+  background: #2b2b2b;
+  color: var(--brand-gold-muted);
+  border: 1px solid var(--brand-red-muted);
+}
+
+body.dark-mode .chat-form button:hover,
+body.dark-mode .generate-btn:hover {
+  background: #3a3a3a;
 }

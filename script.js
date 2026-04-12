@@ -3,6 +3,9 @@ const categoryFilter = document.getElementById("categoryFilter");
 const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
+const body = document.body;
+const logo = document.querySelector(".logo");
+const themeToggle = document.getElementById("themeToggle");
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -30,7 +33,7 @@ function displayProducts(products) {
         <p>${product.brand}</p>
       </div>
     </div>
-  `
+  `,
     )
     .join("");
 }
@@ -43,7 +46,7 @@ categoryFilter.addEventListener("change", async (e) => {
   /* filter() creates a new array containing only products 
      where the category matches what the user selected */
   const filteredProducts = products.filter(
-    (product) => product.category === selectedCategory
+    (product) => product.category === selectedCategory,
   );
 
   displayProducts(filteredProducts);
@@ -56,28 +59,35 @@ chatForm.addEventListener("submit", (e) => {
   chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
 });
 
-// Load saved theme preference on page load
-const savedTheme = localStorage.getItem("theme") || "light";
-if (savedTheme === "dark") {
-  body.classList.add("dark-mode");
-  logo.src = "img/loreal-logo-black-and-white.png"; // Use white logo for dark mode
-  themeToggle.textContent = "☀️"; // Show sun icon to let user switch to light mode
-} else {
-  themeToggle.textContent = "🌙"; // Show moon icon to let user switch to dark mode
+/* Apply the selected theme and keep UI elements in sync */
+function applyTheme(theme) {
+  const isDarkMode = theme === "dark";
+  body.classList.toggle("dark-mode", isDarkMode);
+
+  if (logo) {
+    logo.src = isDarkMode
+      ? "img/loreal-logo-black-and-white.png"
+      : "img/loreal-logo.png";
+  }
+
+  if (themeToggle) {
+    themeToggle.textContent = isDarkMode ? "☀️" : "🌙";
+    themeToggle.setAttribute(
+      "aria-label",
+      isDarkMode ? "Switch to light mode" : "Switch to dark mode",
+    );
+  }
 }
 
-// Handle theme toggle button click
-themeToggle.addEventListener("click", () => {
-  body.classList.toggle("dark-mode"); // Toggle the dark-mode class
+// Load saved theme preference on page load
+const savedTheme = localStorage.getItem("theme") || "light";
+applyTheme(savedTheme);
 
-  // Update the button icon and logo based on the new mode
-  if (body.classList.contains("dark-mode")) {
-    logo.src = "img/loreal-logo-black-and-white.png"; // Use white logo for dark mode
-    themeToggle.textContent = "☀️"; // Show sun icon to let user switch to light mode
-    localStorage.setItem("theme", "dark"); // Save preference
-  } else {
-    logo.src = "img/loreal-logo.png"; // Use black logo for light mode
-    themeToggle.textContent = "🌙"; // Show moon icon to let user switch to dark mode
-    localStorage.setItem("theme", "light"); // Save preference
-  }
-});
+// Handle theme toggle button click
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const nextTheme = body.classList.contains("dark-mode") ? "light" : "dark";
+    applyTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+  });
+}
