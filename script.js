@@ -46,18 +46,36 @@ function updateSelectedProducts() {
   const selectedNames = Array.from(selectedCards).map(
     (card) => card.querySelector("h3").textContent,
   );
-  const selectedProductsSection = document.getElementById("selectedProducts");
+  const selectedProductsList = document.getElementById("selectedProductsList");
 
-  if (!selectedProductsSection) {
+  if (!selectedProductsList) {
+    updateGenerateRoutineButtonState();
     return;
   }
 
-  selectedProductsSection.innerHTML = `
-    <h2>Selected Products</h2>
-    <ul>
-      ${selectedNames.map((name) => `<li>${name}</li>`).join("")}
-    </ul>
-  `;
+  selectedProductsList.innerHTML = selectedNames.length
+    ? `<ul>${selectedNames.map((name) => `<li>${name}</li>`).join("")}</ul>`
+    : `<p>No products selected yet.</p>`;
+
+  updateGenerateRoutineButtonState();
+}
+
+/* Enable the Generate Routine button only when at least one product is selected */
+function updateGenerateRoutineButtonState() {
+  if (!generateRoutineButton) {
+    return;
+  }
+
+  const selectedCards = productsContainer.querySelectorAll(
+    ".product-card.selected",
+  );
+  const hasSelectedProducts = selectedCards.length > 0;
+
+  generateRoutineButton.disabled = !hasSelectedProducts;
+  generateRoutineButton.setAttribute(
+    "aria-disabled",
+    String(!hasSelectedProducts),
+  );
 }
 
 /* Handle select/unselect on click and apply visual highlight */
@@ -196,6 +214,97 @@ chatForm.addEventListener("submit", async (e) => {
     chatWindow.innerHTML = `<p>Sorry, I couldn't connect to OpenAI. Please check your API key and try again.</p>`;
   }
 });
+
+/* Activate the Generate Routine button when the user has selected at least one product and clicks the button */
+const generateRoutineButton = document.getElementById("generateRoutine");
+
+if (generateRoutineButton) {
+  generateRoutineButton.addEventListener("click", async () => {
+    const selectedCards = productsContainer.querySelectorAll(
+      ".product-card.selected",
+    );
+    if (selectedCards.length === 0) {
+      alert("Please select at least one product to generate a routine.");
+      return;
+    }
+
+    if (typeof api_key !== "string" || api_key.trim() === "") {
+      chatWindow.innerHTML = `<p>OpenAI API key is missing. Check secrets.js.</p>`;
+      return;
+    }
+
+    const selectedNames = Array.from(selectedCards).map((card) =>
+      card.querySelector("h3").textContent.trim(),
+    );
+
+    chatWindow.innerHTML = `<p>Generating your routine...</p>`;
+    generateRoutineButton.disabled = true;
+
+    try {
+      const products = await loadProducts();
+      const selectedProducts = products.filter((product) =>
+        selectedNames.includes(product.name),
+      );
+
+      const productSummary = selectedProducts
+        .map(
+          (product) =>
+            `- ${product.name} (${product.brand}, ${product.category}): ${product.description}`,
+        )
+        .join("\n");
+
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${api_key}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a beginner-friendly beauty advisor. Build a simple routine using only the products provided by the user. Use clear headings and short steps for Morning and Evening.",
+              },
+              {
+                role: "user",
+                content: `Create a skincare/beauty routine using these selected products:\n${productSummary}\n\nFormat:\n1) Morning\n2) Evening\n3) Quick tips`,
+              },
+            ],
+            max_tokens: 600,
+            temperature: 0.3,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const apiError = data.error?.message || "Unknown API error";
+        throw new Error(apiError);
+      }
+
+      const aiReply = data.choices?.[0]?.message?.content;
+
+      if (!aiReply) {
+        chatWindow.innerHTML = `<p>No routine was returned. Please try again.</p>`;
+        return;
+      }
+
+      chatWindow.innerHTML = `<p>${aiReply.replace(/\n/g, "<br>")}</p>`;
+    } catch (error) {
+      console.error("Routine generation failed:", error);
+      chatWindow.innerHTML = `<p>Sorry, routine generation failed. Please try again.</p>`;
+    } finally {
+      updateGenerateRoutineButtonState();
+    }
+  });
+
+  updateGenerateRoutineButtonState();
+}
 
 /* Apply the selected theme and keep UI elements in sync */
 function applyTheme(theme) {
