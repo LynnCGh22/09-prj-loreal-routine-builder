@@ -267,7 +267,7 @@ chatForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    chatWindow.innerHTML = `<p>${aiReply}</p>`;
+    chatWindow.innerHTML += `<p><strong>AI:</strong> ${aiReply}</p>`;
     userInputElement.value = "";
   } catch (error) {
     console.error("OpenAI request failed:", error);
