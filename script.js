@@ -325,7 +325,7 @@ if (generateRoutineButton) {
               {
                 role: "system",
                 content:
-                  "You are a beginner-friendly beauty advisor. Build a simple routine using only the products provided by the user. Use clear headings and short steps for Morning and Evening.",
+                  "You are a beginner-friendly beauty advisor. Build a simple routine using only the products provided by the user. Use clear headings and short steps for Morning and Evening. Make sure to stick to a professional tone and avoid slang, jokes, emojis, or overly casual language. Focus on practical advice and direct recommendations based on the products provided. Do not include any products that were not listed by the user, and do not diverge into unrelated topics.",
               },
               {
                 role: "user",
@@ -333,7 +333,9 @@ if (generateRoutineButton) {
               },
             ],
             max_tokens: 600,
-            temperature: 0.3,
+            temperature: 0.2, // Lower temperature for more focused, deterministic responses
+            frequency_penalty: 0.2, // Slightly discourage repetition for more varied responses
+            presence_penalty: 0.2, // Slightly encourage diversity for more varied responses
           }),
         },
       );
@@ -362,6 +364,70 @@ if (generateRoutineButton) {
   });
 
   updateGenerateRoutineButtonState();
+}
+
+/* Allow the user to ask follow-up questions about the generated routine or selected products in the chatbox */
+const chatInput = document.getElementById("chatInput");
+const chatSubmitButton = document.getElementById("chatSubmitButton");
+
+if (chatSubmitButton) {
+  chatSubmitButton.addEventListener("click", async () => {
+    const userMessage = chatInput.value.trim();
+    if (!userMessage) return;
+
+    chatWindow.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
+    chatInput.value = "";
+
+    try {
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${api_key}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a helpful assistant. Answer the user's questions about the generated skincare routine or selected products. Be sure to maintain a professional tone and provide clear, concise answers. If the question is unrelated to the routine or products, politely decline to answer.",
+              },
+              {
+                role: "user",
+                content: userMessage,
+              },
+            ],
+            max_tokens: 300,
+            temperature: 0.2, // Lower temperature for more focused, deterministic responses
+            frequency_penalty: 0.2, // Slightly discourage repetition for more varied responses
+            presence_penalty: 0.2, // Slightly encourage diversity for more varied responses
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const apiError = data.error?.message || "Unknown API error";
+        throw new Error(apiError);
+      }
+
+      const aiReply = data.choices?.[0]?.message?.content;
+
+      if (!aiReply) {
+        chatWindow.innerHTML += `<p><strong>AI:</strong> Sorry, I couldn't understand that.</p>`;
+        return;
+      }
+
+      chatWindow.innerHTML += `<p><strong>AI:</strong> ${aiReply.replace(/\n/g, "<br>")}</p>`;
+    } catch (error) {
+      console.error("Chat request failed:", error);
+      chatWindow.innerHTML += `<p><strong>AI:</strong> Sorry, I couldn't connect to OpenAI. Please check your API key and try again.</p>`;
+    }
+  });
 }
 
 /* Apply the selected theme and keep UI elements in sync */
