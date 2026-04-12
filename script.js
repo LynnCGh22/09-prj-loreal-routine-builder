@@ -141,6 +141,11 @@ chatForm.addEventListener("submit", async (e) => {
     return;
   }
 
+  if (typeof api_key !== "string" || api_key.trim() === "") {
+    chatWindow.innerHTML = `<p>OpenAI API key is missing. Check secrets.js.</p>`;
+    return;
+  }
+
   chatWindow.innerHTML = `<p>Connecting to OpenAI API...</p>`;
 
   try {
@@ -162,12 +167,8 @@ chatForm.addEventListener("submit", async (e) => {
             role: "user",
             content: userInput,
           },
-            ...activeSession.messages.map((message) => ({
-            role: message.role === "ai" ? "assistant" : "user",
-            content: message.content,
-          }))
         ],
-        max_completion_tokens: 1000, // Give the model more room so longer answers do not cut off too early
+        max_tokens: 500,
         temperature: 0.2, // Lower temperature for more focused, deterministic responses
         frequency_penalty: 0.2, // Slightly discourage repetition for more varied responses
         presence_penalty: 0.2, // Slightly encourage diversity for more varied responses
