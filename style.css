@@ -638,6 +638,7 @@ body.dark-mode .delete-chat-btn:hover {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 8px;
+  color: #2f210e;
 }
 
 .category-options label {
@@ -652,6 +653,7 @@ body.dark-mode .delete-chat-btn:hover {
 .category-options input[type="checkbox"] {
   width: 18px;
   height: 18px;
+  accent-color: var(--brand-red);
 }
 
 .filter-hint {
@@ -949,6 +951,24 @@ body.dark-mode .search-section select {
   background: #252525;
   color: #e0e0e0;
   border-color: var(--brand-red-muted);
+}
+
+body.dark-mode .category-options {
+  background: #1e1e1e;
+  border-color: var(--brand-red-muted);
+}
+
+body.dark-mode .category-options legend,
+body.dark-mode .category-options label {
+  color: #f5ecdd;
+}
+
+body.dark-mode .category-options input[type="checkbox"] {
+  accent-color: var(--brand-gold-muted);
+}
+
+body.dark-mode .filter-hint {
+  color: #d1c6b1;
 }
 
 body.dark-mode .chatbox,
