@@ -38,18 +38,60 @@ function displayProducts(products) {
     .join("");
 }
 
+/* Keep the "Selected Products" section in sync with selected cards */
+function updateSelectedProducts() {
+  const selectedCards = productsContainer.querySelectorAll(
+    ".product-card.selected",
+  );
+  const selectedNames = Array.from(selectedCards).map(
+    (card) => card.querySelector("h3").textContent,
+  );
+  const selectedProductsSection = document.getElementById("selectedProducts");
+
+  if (!selectedProductsSection) {
+    return;
+  }
+
+  selectedProductsSection.innerHTML = `
+    <h2>Selected Products</h2>
+    <ul>
+      ${selectedNames.map((name) => `<li>${name}</li>`).join("")}
+    </ul>
+  `;
+}
+
+/* Handle select/unselect on click and apply visual highlight */
+productsContainer.addEventListener("click", (e) => {
+  const card = e.target.closest(".product-card");
+  if (!card || !productsContainer.contains(card)) {
+    return;
+  }
+
+  card.classList.toggle("selected");
+
+  card.style.border = card.classList.contains("selected")
+    ? "2px solid #7f2b33"
+    : "1px solid #ccc";
+  card.style.backgroundColor = card.classList.contains("selected")
+    ? "#E0F0FF"
+    : "#fff";
+
+  updateSelectedProducts();
+});
+
 /* Filter and display products when category changes */
 categoryFilter.addEventListener("change", async (e) => {
   const products = await loadProducts();
   const selectedCategory = e.target.value;
 
   /* filter() creates a new array containing only products 
-     where the category matches what the user selected */
+      where the category matches what the user selected */
   const filteredProducts = products.filter(
     (product) => product.category === selectedCategory,
   );
 
   displayProducts(filteredProducts);
+  updateSelectedProducts();
 });
 
 /* Chat form submission handler - placeholder for OpenAI integration */
