@@ -66,8 +66,8 @@ function applyTheme(theme) {
 
   if (logo) {
     logo.src = isDarkMode
-      ? "img/loreal-logo-black-and-white.png"
-      : "img/loreal-logo.png";
+      ? "img/loreal-logo-black-and-white (1).png"
+      : "img/loreal-logo-png-transparent.png";
   }
 
   if (themeToggle) {
