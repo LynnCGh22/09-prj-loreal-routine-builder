@@ -112,20 +112,42 @@ productsContainer.addEventListener("click", (e) => {
 
 /* Filter and display products when category changes */
 categoryFilter.addEventListener("change", async (e) => {
-  const selectedCategory = e.target.value;
+  if (e.target.name !== "categoryFilterOption") {
+    return;
+  }
+
+  const selectedCategories = Array.from(
+    categoryFilter.querySelectorAll(
+      'input[name="categoryFilterOption"]:checked',
+    ),
+  ).map((checkbox) => checkbox.value);
+
+  const selectedCategoriesLabel = selectedCategories.length
+    ? selectedCategories.join(", ")
+    : "None";
 
   chatWindow.innerHTML = `
-    <p><strong>Category updated:</strong> ${selectedCategory}</p>
+    <p><strong>Categories updated:</strong> ${selectedCategoriesLabel}</p>
     <p>Select a product to view details, or choose products and click Generate Routine.</p>
   `;
 
   try {
     const products = await getProducts();
 
+    if (selectedCategories.length === 0) {
+      productsContainer.innerHTML = `
+        <div class="placeholder-message">
+          Select one or more categories to view products.
+        </div>
+      `;
+      updateSelectedProducts();
+      return;
+    }
+
     /* filter() creates a new array containing only products
-        where the category matches what the user selected */
-    const filteredProducts = products.filter(
-      (product) => product.category === selectedCategory,
+        where the category matches one of the selected categories */
+    const filteredProducts = products.filter((product) =>
+      selectedCategories.includes(product.category),
     );
 
     if (filteredProducts.length === 0) {

@@ -623,19 +623,45 @@ body.dark-mode .delete-chat-btn:hover {
   display: flex;
 }
 
-.search-section select {
+.category-options {
   width: 100%;
   padding: 16px;
-  font-size: 18px;
   border: 2px solid #000;
   border-radius: 8px;
-  cursor: pointer;
   background-color: white;
-  font-weight: 500;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
 }
 
-.search-section select:focus {
-  outline: none;
+.category-options legend {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.category-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #3d3427;
+}
+
+.category-options input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.filter-hint {
+  margin-top: -16px;
+  margin-bottom: 20px;
+  color: #6d5f4d;
+  font-size: 14px;
+}
+
+.category-options:focus-within {
   border-color: #666;
 }
 
