@@ -222,7 +222,9 @@ chatForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  chatWindow.innerHTML = `<p>Connecting to OpenAI API...</p>`;
+  /* Display the user's question in the chat window */
+  chatWindow.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+  chatWindow.innerHTML += `<p>Connecting to OpenAI API...</p>`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -429,16 +431,6 @@ if (chatSubmitButton) {
     }
   });
 }
-
-/* Display the question asked by the user in the chat window and clear the input field */
-chatForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const userInput = chatInput.value.trim();
-  if (!userInput) return;
-
-  chatWindow.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
-  chatInput.value = "";
-});
 
 /* Apply the selected theme and keep UI elements in sync */
 function applyTheme(theme) {
