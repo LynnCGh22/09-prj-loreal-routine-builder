@@ -96,13 +96,6 @@ categoryFilter.addEventListener("change", async (e) => {
   updateSelectedProducts();
 });
 
-/* Chat form submission handler - placeholder for OpenAI integration */
-chatForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
-});
-
 /* Display the product description in the chat window when a product card is clicked */
 productsContainer.addEventListener("click", async (e) => {
   const card = e.target.closest(".product-card");
@@ -135,6 +128,64 @@ productsContainer.addEventListener("click", async (e) => {
   } catch (error) {
     console.error("Error loading product details:", error);
     chatWindow.innerHTML = `<p>Sorry, there was a problem loading product details. Please try again.</p>`;
+  }
+});
+
+/* Connect to the OpenAI API and get a response based on user input in the chat form */
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const userInputElement = document.getElementById("userInput");
+  const userInput = userInputElement.value.trim();
+  if (!userInput) {
+    return;
+  }
+
+  chatWindow.innerHTML = `<p>Connecting to OpenAI API...</p>`;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${api_key}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a beginner-friendly L'Oreal beauty advisor. Keep responses short and practical.",
+          },
+          {
+            role: "user",
+            content: userInput,
+          },
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const apiError = data.error?.message || "Unknown API error";
+      throw new Error(apiError);
+    }
+
+    const aiReply = data.choices?.[0]?.message?.content;
+
+    if (!aiReply) {
+      chatWindow.innerHTML = `<p>No response received from OpenAI.</p>`;
+      return;
+    }
+
+    chatWindow.innerHTML = `<p>${aiReply}</p>`;
+    userInputElement.value = "";
+  } catch (error) {
+    console.error("OpenAI request failed:", error);
+    chatWindow.innerHTML = `<p>Sorry, I couldn't connect to OpenAI. Please check your API key and try again.</p>`;
   }
 });
 
