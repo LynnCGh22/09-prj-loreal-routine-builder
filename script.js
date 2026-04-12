@@ -102,22 +102,39 @@ chatForm.addEventListener("submit", (e) => {
 
   chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
 });
+
 /* Display the product description in the chat window when a product card is clicked */
 productsContainer.addEventListener("click", async (e) => {
   const card = e.target.closest(".product-card");
   if (!card || !productsContainer.contains(card)) {
     return;
   }
-  
-  const productName = card.querySelector("h3").textContent;
-  const products = await loadProducts();
-  const product = products.find((p) => p.name === productName);
-  if (product) {
+
+  const productTitle = card.querySelector("h3");
+  if (!productTitle) {
+    return;
+  }
+
+  const productName = productTitle.textContent.trim();
+  chatWindow.innerHTML = `<p>Loading product details...</p>`;
+
+  try {
+    const products = await loadProducts();
+    const product = products.find((p) => p.name === productName);
+
+    if (!product) {
+      chatWindow.innerHTML = `<p>Sorry, we couldn't find that product's details.</p>`;
+      return;
+    }
+
     chatWindow.innerHTML = `
       <h3>${product.name}</h3>
       <p><strong>Brand:</strong> ${product.brand}</p>
       <p><strong>Description:</strong> ${product.description}</p>
     `;
+  } catch (error) {
+    console.error("Error loading product details:", error);
+    chatWindow.innerHTML = `<p>Sorry, there was a problem loading product details. Please try again.</p>`;
   }
 });
 
