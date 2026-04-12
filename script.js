@@ -69,12 +69,14 @@ productsContainer.addEventListener("click", (e) => {
 
   card.classList.toggle("selected");
 
-  card.style.border = card.classList.contains("selected")
-    ? "2px solid #7f2b33"
-    : "1px solid #ccc";
-  card.style.backgroundColor = card.classList.contains("selected")
-    ? "#E0F0FF"
-    : "#fff";
+  const isSelected = card.classList.contains("selected");
+  if (isSelected) {
+    card.style.border = "2px solid #7f2b33";
+    card.style.backgroundColor = "#E0F0FF";
+  } else {
+    card.style.border = "";
+    card.style.backgroundColor = "";
+  }
 
   updateSelectedProducts();
 });
