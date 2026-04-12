@@ -6,6 +6,7 @@ const chatWindow = document.getElementById("chatWindow");
 const body = document.body;
 const logo = document.querySelector(".logo");
 const themeToggle = document.getElementById("themeToggle");
+let cachedProducts = [];
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -19,6 +20,16 @@ async function loadProducts() {
   const response = await fetch("products.json");
   const data = await response.json();
   return data.products;
+}
+
+/* Load products once and reuse them to keep UI updates fast and consistent */
+async function getProducts() {
+  if (cachedProducts.length > 0) {
+    return cachedProducts;
+  }
+
+  cachedProducts = await loadProducts();
+  return cachedProducts;
 }
 
 /* Create HTML for displaying product cards */
@@ -101,17 +112,42 @@ productsContainer.addEventListener("click", (e) => {
 
 /* Filter and display products when category changes */
 categoryFilter.addEventListener("change", async (e) => {
-  const products = await loadProducts();
   const selectedCategory = e.target.value;
 
-  /* filter() creates a new array containing only products 
-      where the category matches what the user selected */
-  const filteredProducts = products.filter(
-    (product) => product.category === selectedCategory,
-  );
+  chatWindow.innerHTML = `
+    <p><strong>Category updated:</strong> ${selectedCategory}</p>
+    <p>Select a product to view details, or choose products and click Generate Routine.</p>
+  `;
 
-  displayProducts(filteredProducts);
-  updateSelectedProducts();
+  try {
+    const products = await getProducts();
+
+    /* filter() creates a new array containing only products
+        where the category matches what the user selected */
+    const filteredProducts = products.filter(
+      (product) => product.category === selectedCategory,
+    );
+
+    if (filteredProducts.length === 0) {
+      productsContainer.innerHTML = `
+        <div class="placeholder-message">
+          No products found in this category yet.
+        </div>
+      `;
+    } else {
+      displayProducts(filteredProducts);
+    }
+
+    updateSelectedProducts();
+  } catch (error) {
+    console.error("Error filtering products:", error);
+    productsContainer.innerHTML = `
+      <div class="placeholder-message">
+        Could not load products. Please try again.
+      </div>
+    `;
+    updateSelectedProducts();
+  }
 });
 
 /* Display the product description in the chat window when a product card is clicked */
@@ -130,7 +166,7 @@ productsContainer.addEventListener("click", async (e) => {
   chatWindow.innerHTML = `<p>Loading product details...</p>`;
 
   try {
-    const products = await loadProducts();
+    const products = await getProducts();
     const product = products.find((p) => p.name === productName);
 
     if (!product) {
@@ -241,7 +277,7 @@ if (generateRoutineButton) {
     generateRoutineButton.disabled = true;
 
     try {
-      const products = await loadProducts();
+      const products = await getProducts();
       const selectedProducts = products.filter((product) =>
         selectedNames.includes(product.name),
       );
