@@ -156,14 +156,21 @@ chatForm.addEventListener("submit", async (e) => {
           {
             role: "system",
             content:
-              "You are a beginner-friendly L'Oreal beauty advisor. Keep responses short and practical.",
+              "You are a professional workplace assistant. Use a formal, serious tone. Structure responses clearly with concise sections using headings when helpful, and provide direct, practical recommendations. Avoid slang, jokes, emojis, and overly casual or comical phrasing, and do not diverge too far from the topic. Also, politely decline to answer any questions not related to L’Oréal products, routines, recommendations, beauty-related topics, or general beauty advice.",
           },
           {
             role: "user",
             content: userInput,
           },
+            ...activeSession.messages.map((message) => ({
+            role: message.role === "ai" ? "assistant" : "user",
+            content: message.content,
+          }))
         ],
-        temperature: 0.7,
+        max_completion_tokens: 1000, // Give the model more room so longer answers do not cut off too early
+        temperature: 0.2, // Lower temperature for more focused, deterministic responses
+        frequency_penalty: 0.2, // Slightly discourage repetition for more varied responses
+        presence_penalty: 0.2, // Slightly encourage diversity for more varied responses
       }),
     });
 
