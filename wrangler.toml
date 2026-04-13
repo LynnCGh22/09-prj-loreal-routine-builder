@@ -1,3 +1,6 @@
 name = "loreal-routine-builder"
 main = "worker.js"
 compatibility_date = "2026-04-12"
+
+[vars]
+OPENAI_API_KEY = ''

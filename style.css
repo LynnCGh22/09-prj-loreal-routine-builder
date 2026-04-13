@@ -714,6 +714,52 @@ body.dark-mode .delete-chat-btn:hover {
   font-size: 14px;
 }
 
+.product-search-bar {
+  margin-top: -8px;
+  margin-bottom: 14px;
+}
+
+.product-search-bar label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3d3427;
+}
+
+.product-search-bar input {
+  width: 100%;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 16px;
+  background: #fff;
+  color: #3d3427;
+}
+
+.product-search-bar input:focus {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
+}
+
+.ai-search-controls {
+  margin-bottom: 12px;
+}
+
+.ai-search-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #5f513c;
+}
+
+.ai-search-controls input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand-red);
+}
+
 .category-options:focus-within {
   border-color: #666;
 }
@@ -1064,6 +1110,28 @@ body.dark-mode .filter-hint {
   color: #d1c6b1;
 }
 
+body.dark-mode .product-search-bar label {
+  color: #f5ecdd;
+}
+
+body.dark-mode .product-search-bar input {
+  background: #252525;
+  color: #e0e0e0;
+  border-color: var(--brand-red-muted);
+}
+
+body.dark-mode .product-search-bar input:focus {
+  outline-color: var(--brand-gold-muted);
+}
+
+body.dark-mode .ai-search-controls label {
+  color: #d1c6b1;
+}
+
+body.dark-mode .ai-search-controls input[type="checkbox"] {
+  accent-color: var(--brand-gold-muted);
+}
+
 body.dark-mode .chatbox,
 body.dark-mode .selected-products {
   border-color: var(--brand-red-muted);
@@ -1142,4 +1210,183 @@ body.dark-mode .clear-selection-btn:disabled {
   background: #262223;
   border-color: #423639;
   color: #948a7c;
+}
+
+/* ====== RTL (Right-to-Left) Language Support ====== */
+
+/* Apply RTL text direction to the entire page */
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Adjust header alignment for RTL */
+html[dir="rtl"] .site-header {
+  text-align: center;
+  direction: rtl;
+}
+
+/* Adjust category filter labels for RTL */
+html[dir="rtl"] .category-options label {
+  direction: rtl;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+html[dir="rtl"] .category-options input {
+  margin-left: 8px;
+  margin-right: 0;
+}
+
+html[dir="rtl"] .product-search-bar {
+  direction: rtl;
+}
+
+html[dir="rtl"] .product-search-bar label {
+  text-align: right;
+}
+
+html[dir="rtl"] .ai-search-controls {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Ensure product cards remain properly aligned */
+html[dir="rtl"] .products-grid {
+  direction: rtl;
+}
+
+/* Adjust product card layout for RTL */
+html[dir="rtl"] .product-card {
+  direction: rtl;
+}
+
+html[dir="rtl"] .product-info {
+  text-align: right;
+}
+
+/* Adjust selected products section for RTL */
+html[dir="rtl"] .selected-products {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .selected-products ul {
+  text-align: right;
+}
+
+html[dir="rtl"] .selected-products ul li {
+  text-align: right;
+}
+
+/* Adjust button ordering for RTL */
+html[dir="rtl"] .selected-products button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Adjust chat window for RTL */
+html[dir="rtl"] .chatbox {
+  direction: rtl;
+}
+
+html[dir="rtl"] .chat-window {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Message alignment for RTL - reverse the flex direction for both user and AI messages */
+html[dir="rtl"] .msg {
+  flex-direction: row-reverse;
+  align-self: flex-start;
+}
+
+html[dir="rtl"] .msg.user {
+  flex-direction: row;
+  align-self: flex-end;
+}
+
+html[dir="rtl"] .msg.ai {
+  flex-direction: row-reverse;
+  align-self: flex-start;
+}
+
+html[dir="rtl"] .msg.user .msg-body {
+  align-items: flex-end;
+}
+
+html[dir="rtl"] .msg.ai .msg-body {
+  align-items: flex-start;
+}
+
+/* User message bubble alignment */
+html[dir="rtl"] .msg.user .msg-bubble {
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 6px;
+}
+
+/* AI message bubble alignment */
+html[dir="rtl"] .msg.ai .msg-bubble {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 16px;
+}
+
+/* Adjust chat form for RTL */
+html[dir="rtl"] .chat-form {
+  direction: rtl;
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .chat-form input {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
+html[dir="rtl"] .chat-form button {
+  direction: rtl;
+}
+
+/* Adjust footer for RTL */
+html[dir="rtl"] .site-footer {
+  direction: rtl;
+  text-align: center;
+}
+
+html[dir="rtl"] .site-footer nav {
+  direction: rtl;
+  display: flex;
+  justify-content: center;
+}
+
+html[dir="rtl"] .site-footer a {
+  margin: 0 8px;
+}
+
+/* Adjust the visually hidden class for RTL */
+html[dir="rtl"] .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Dark mode RTL support */
+html[dir="rtl"] body.dark-mode {
+  direction: rtl;
+}
+
+html[dir="rtl"] body.dark-mode .site-footer {
+  direction: rtl;
+}
+
+html[dir="rtl"] body.dark-mode .chat-window {
+  direction: rtl;
+  text-align: right;
 }

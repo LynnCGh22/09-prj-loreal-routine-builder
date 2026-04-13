@@ -6,7 +6,41 @@ const chatWindow = document.getElementById("chatWindow");
 const body = document.body;
 const logo = document.querySelector(".logo");
 const themeToggle = document.getElementById("themeToggle");
+const productKeywordSearch = document.getElementById("productKeywordSearch");
+const useCurrentInfoToggle = document.getElementById("useCurrentInfo");
 let cachedProducts = [];
+let activeCategoryFilters = [];
+let activeKeywordFilter = "";
+const SELECTED_PRODUCTS_STORAGE_KEY = "selectedProducts";
+let selectedProductNames = new Set();
+
+/* Initialize RTL support - detect and apply RTL settings based on language */
+function initializeRTLSupport() {
+  const htmlElement = document.documentElement;
+  const currentLang = (htmlElement.getAttribute("lang") || "en").split("-")[0];
+
+  // RTL languages: Arabic (ar), Hebrew (he)
+  const rtlLanguages = ["ar", "he"];
+  const isRTL = rtlLanguages.includes(currentLang);
+
+  // Set direction attribute
+  htmlElement.setAttribute("dir", isRTL ? "rtl" : "ltr");
+
+  // Toggle Bootstrap RTL stylesheet
+  const bootstrapLtr = document.getElementById("bootstrap-ltr");
+  const bootstrapRtl = document.getElementById("bootstrap-rtl");
+
+  if (isRTL) {
+    if (bootstrapLtr) bootstrapLtr.disabled = true;
+    if (bootstrapRtl) bootstrapRtl.disabled = false;
+  } else {
+    if (bootstrapLtr) bootstrapLtr.disabled = false;
+    if (bootstrapRtl) bootstrapRtl.disabled = true;
+  }
+}
+
+// Initialize RTL on page load
+initializeRTLSupport();
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -46,6 +80,85 @@ function formatResponseAsBullets(responseText) {
   return `<ul>${lines.map((line) => `<li>${line}</li>`).join("")}</ul>`;
 }
 
+/* Convert markdown links to clickable anchors for citations */
+function formatAiResponseWithLinks(responseText) {
+  const bulletHtml = formatResponseAsBullets(responseText);
+
+  return bulletHtml.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+  );
+}
+
+/* Escape text before inserting it into HTML */
+function escapeHtml(text) {
+  const tempElement = document.createElement("div");
+  tempElement.textContent = text;
+  return tempElement.innerHTML;
+}
+
+/* Save selected products in localStorage so they survive reloads */
+function saveSelectedProducts() {
+  localStorage.setItem(
+    SELECTED_PRODUCTS_STORAGE_KEY,
+    JSON.stringify(Array.from(selectedProductNames)),
+  );
+}
+
+/* Load selected products from localStorage on startup */
+function loadSelectedProducts() {
+  const raw = localStorage.getItem(SELECTED_PRODUCTS_STORAGE_KEY);
+
+  if (!raw) {
+    selectedProductNames = new Set();
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      selectedProductNames = new Set(
+        parsed.filter((name) => typeof name === "string" && name.trim() !== ""),
+      );
+    } else {
+      selectedProductNames = new Set();
+    }
+  } catch (error) {
+    selectedProductNames = new Set();
+  }
+}
+
+/* Build the selected-products list from persisted selection state */
+function renderSelectedProductsList() {
+  const selectedProductsList = document.getElementById("selectedProductsList");
+
+  if (!selectedProductsList) {
+    updateGenerateRoutineButtonState();
+    return;
+  }
+
+  const safeSelectedNames = Array.from(selectedProductNames);
+
+  selectedProductsList.innerHTML = safeSelectedNames.length
+    ? `<ul>${safeSelectedNames
+        .map((name) => `<li translate="yes">${escapeHtml(name)}</li>`)
+        .join("")}</ul>`
+    : `<p translate="yes">No products selected yet.</p>`;
+
+  if (document.documentElement.getAttribute("lang") !== "en") {
+    const htmlSnapshot = selectedProductsList.innerHTML;
+
+    requestAnimationFrame(() => {
+      if (selectedProductsList.isConnected) {
+        selectedProductsList.innerHTML = htmlSnapshot;
+      }
+    });
+  }
+
+  updateClearSelectionButtonState();
+  updateGenerateRoutineButtonState();
+}
+
 /* Create HTML for displaying product cards */
 function displayProducts(products) {
   productsContainer.innerHTML = products
@@ -63,28 +176,108 @@ function displayProducts(products) {
     .join("");
 }
 
-/* Keep the "Selected Products" section in sync with selected cards */
-function updateSelectedProducts() {
-  const selectedCards = productsContainer.querySelectorAll(
-    ".product-card.selected",
-  );
-  const selectedNames = Array.from(selectedCards).map(
-    (card) => card.querySelector("h3").textContent,
-  );
-  const selectedProductsList = document.getElementById("selectedProductsList");
+/* Normalize search text to keep filtering consistent */
+function normalizeSearchText(text) {
+  return (text || "").toLowerCase().trim();
+}
 
-  if (!selectedProductsList) {
-    updateGenerateRoutineButtonState();
-    return;
+/* Check whether a product matches the keyword in name, brand, category, or description */
+function productMatchesKeyword(product, keyword) {
+  if (!keyword) {
+    return true;
   }
 
-  selectedProductsList.innerHTML = selectedNames.length
-    ? `<ul>${selectedNames.map((name) => `<li>${name}</li>`).join("")}</ul>`
-    : `<p>No products selected yet.</p>`;
+  const searchableText = normalizeSearchText(
+    `${product.name} ${product.brand} ${product.category} ${product.description}`,
+  );
 
-  updateClearSelectionButtonState();
-  updateGenerateRoutineButtonState();
+  return searchableText.includes(keyword);
 }
+
+/* Apply category + keyword filters together and refresh the grid */
+async function applyProductFilters(announceChange) {
+  const selectedNamesSet = new Set(selectedProductNames);
+
+  try {
+    const products = await getProducts();
+    const hasCategoryFilter = activeCategoryFilters.length > 0;
+    const hasKeywordFilter = activeKeywordFilter !== "";
+
+    if (!hasCategoryFilter && !hasKeywordFilter) {
+      productsContainer.innerHTML = `
+        <div class="placeholder-message" translate="yes">
+          Select one or more categories or type a keyword to view products.
+        </div>
+      `;
+      updateSelectedProducts();
+      return;
+    }
+
+    const filteredProducts = products.filter((product) => {
+      const matchesCategory =
+        !hasCategoryFilter || activeCategoryFilters.includes(product.category);
+      const matchesKeyword = productMatchesKeyword(
+        product,
+        activeKeywordFilter,
+      );
+
+      return matchesCategory && matchesKeyword;
+    });
+
+    if (filteredProducts.length === 0) {
+      productsContainer.innerHTML = `
+        <div class="placeholder-message" translate="yes">
+          No products match your current filters yet.
+        </div>
+      `;
+    } else {
+      displayProducts(filteredProducts);
+
+      const cards = productsContainer.querySelectorAll(".product-card");
+      cards.forEach((card) => {
+        const name = card.querySelector("h3")?.textContent.trim() || "";
+
+        if (selectedNamesSet.has(name)) {
+          card.classList.add("selected");
+        }
+      });
+    }
+
+    if (announceChange) {
+      const selectedCategoriesLabel = hasCategoryFilter
+        ? activeCategoryFilters.join(", ")
+        : "All categories";
+      const keywordLabel = hasKeywordFilter
+        ? activeKeywordFilter
+        : "No keyword";
+
+      chatWindow.innerHTML = `
+        <p><strong>Filters updated:</strong> ${selectedCategoriesLabel}</p>
+        <p><strong>Keyword:</strong> ${keywordLabel}</p>
+        <p>Choose products and click Generate Routine.</p>
+      `;
+    }
+
+    updateSelectedProducts();
+  } catch (error) {
+    console.error("Error filtering products:", error);
+    productsContainer.innerHTML = `
+      <div class="placeholder-message" translate="yes">
+        Could not load products. Please try again.
+      </div>
+    `;
+    updateSelectedProducts();
+  }
+}
+
+/* Keep the "Selected Products" section in sync with selected cards */
+function updateSelectedProducts() {
+  renderSelectedProductsList();
+}
+
+window.addEventListener("app-language-changed", async () => {
+  await applyProductFilters(false);
+});
 
 /* Keep the clear-selection button disabled when there is nothing to clear */
 function updateClearSelectionButtonState() {
@@ -92,10 +285,7 @@ function updateClearSelectionButtonState() {
     return;
   }
 
-  const selectedCards = productsContainer.querySelectorAll(
-    ".product-card.selected",
-  );
-  const hasSelectedProducts = selectedCards.length > 0;
+  const hasSelectedProducts = selectedProductNames.size > 0;
 
   clearSelectionButton.disabled = !hasSelectedProducts;
   clearSelectionButton.setAttribute(
@@ -110,10 +300,7 @@ function updateGenerateRoutineButtonState() {
     return;
   }
 
-  const selectedCards = productsContainer.querySelectorAll(
-    ".product-card.selected",
-  );
-  const hasSelectedProducts = selectedCards.length > 0;
+  const hasSelectedProducts = selectedProductNames.size > 0;
 
   generateRoutineButton.disabled = !hasSelectedProducts;
   generateRoutineButton.setAttribute(
@@ -169,7 +356,20 @@ productsContainer.addEventListener("click", (e) => {
     return;
   }
 
+  const productName = card.querySelector("h3")?.textContent.trim();
+  if (!productName) {
+    return;
+  }
+
   card.classList.toggle("selected");
+
+  if (card.classList.contains("selected")) {
+    selectedProductNames.add(productName);
+  } else {
+    selectedProductNames.delete(productName);
+  }
+
+  saveSelectedProducts();
 
   updateSelectedProducts();
 });
@@ -180,61 +380,21 @@ categoryFilter.addEventListener("change", async (e) => {
     return;
   }
 
-  const selectedCategories = Array.from(
+  activeCategoryFilters = Array.from(
     categoryFilter.querySelectorAll(
       'input[name="categoryFilterOption"]:checked',
     ),
   ).map((checkbox) => checkbox.value);
 
-  const selectedCategoriesLabel = selectedCategories.length
-    ? selectedCategories.join(", ")
-    : "None";
-
-  chatWindow.innerHTML = `
-    <p><strong>Categories updated:</strong> ${selectedCategoriesLabel}</p>
-    <p>Select a product to view details, or choose products and click Generate Routine.</p>
-  `;
-
-  try {
-    const products = await getProducts();
-
-    if (selectedCategories.length === 0) {
-      productsContainer.innerHTML = `
-        <div class="placeholder-message">
-          Select one or more categories to view products.
-        </div>
-      `;
-      updateSelectedProducts();
-      return;
-    }
-
-    /* filter() creates a new array containing only products
-        where the category matches one of the selected categories */
-    const filteredProducts = products.filter((product) =>
-      selectedCategories.includes(product.category),
-    );
-
-    if (filteredProducts.length === 0) {
-      productsContainer.innerHTML = `
-        <div class="placeholder-message">
-          No products found in this category yet.
-        </div>
-      `;
-    } else {
-      displayProducts(filteredProducts);
-    }
-
-    updateSelectedProducts();
-  } catch (error) {
-    console.error("Error filtering products:", error);
-    productsContainer.innerHTML = `
-      <div class="placeholder-message">
-        Could not load products. Please try again.
-      </div>
-    `;
-    updateSelectedProducts();
-  }
+  await applyProductFilters(true);
 });
+
+if (productKeywordSearch) {
+  productKeywordSearch.addEventListener("input", async () => {
+    activeKeywordFilter = normalizeSearchText(productKeywordSearch.value);
+    await applyProductFilters(false);
+  });
+}
 
 /* Display the product description in the chat window when a product card is clicked */
 productsContainer.addEventListener("click", async (e) => {
@@ -284,6 +444,7 @@ chatForm.addEventListener("submit", async (e) => {
   /* Display the user's question in the chat window */
   chatWindow.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
   chatWindow.innerHTML += `<p>Connecting to AI service...</p>`;
+  const useCurrentInfo = Boolean(useCurrentInfoToggle?.checked);
 
   try {
     const data = await requestChatCompletion({
@@ -292,11 +453,13 @@ chatForm.addEventListener("submit", async (e) => {
         {
           role: "system",
           content:
-            "You are a professional workplace assistant. Use a formal, serious tone. Structure responses clearly with concise sections using headings when helpful, and provide direct, practical recommendations. Avoid slang, jokes, emojis, and overly casual or comical phrasing, and do not diverge too far from the topic. Also, politely decline to answer any questions not related to L’Oréal products, routines, recommendations, beauty-related topics, or general beauty advice.",
+            "You are a professional workplace assistant focused on L'Oreal products and beauty routines. Use a clear and practical tone. If asked for current information, include a Sources section with links and short citations. If you cannot verify current details, say that clearly. Politely decline unrelated topics.",
         },
         {
           role: "user",
-          content: userInput,
+          content: useCurrentInfo
+            ? `${userInput}\n\nUse current-info mode: provide the latest relevant public information when possible, then add a Sources section with markdown links and one-line citation notes.`
+            : userInput,
         },
       ],
       max_tokens: 500,
@@ -312,7 +475,7 @@ chatForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    chatWindow.innerHTML += `<div><strong>AI:</strong>${formatResponseAsBullets(
+    chatWindow.innerHTML += `<div><strong>AI:</strong>${formatAiResponseWithLinks(
       aiReply,
     )}</div>`;
     userInputElement.value = "";
@@ -327,17 +490,12 @@ const generateRoutineButton = document.getElementById("generateRoutine");
 
 if (generateRoutineButton) {
   generateRoutineButton.addEventListener("click", async () => {
-    const selectedCards = productsContainer.querySelectorAll(
-      ".product-card.selected",
-    );
-    if (selectedCards.length === 0) {
+    const selectedNames = Array.from(selectedProductNames);
+
+    if (selectedNames.length === 0) {
       alert("Please select at least one product to generate a routine.");
       return;
     }
-
-    const selectedNames = Array.from(selectedCards).map((card) =>
-      card.querySelector("h3").textContent.trim(),
-    );
 
     chatWindow.innerHTML = `<p>Generating your routine...</p>`;
     generateRoutineButton.disabled = true;
@@ -471,12 +629,17 @@ if (clearSelectionButton) {
     selectedCards.forEach((card) => {
       card.classList.remove("selected");
     });
+
+    selectedProductNames.clear();
+    saveSelectedProducts();
+
     updateSelectedProducts();
   });
 }
 
+loadSelectedProducts();
 updateClearSelectionButtonState();
-
+updateSelectedProducts();
 // Load saved theme preference on page load
 const savedTheme = localStorage.getItem("theme") || "light";
 applyTheme(savedTheme);
@@ -488,21 +651,4 @@ if (themeToggle) {
     applyTheme(nextTheme);
     localStorage.setItem("theme", nextTheme);
   });
-}
-
-async function generateRoutine() {
-  const response = await fetch("https://your-worker-url", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: "user", content: "Build me a skincare routine" }
-      ]
-    })
-  });
-
-  const data = await response.json();
-  console.log(data);
 }

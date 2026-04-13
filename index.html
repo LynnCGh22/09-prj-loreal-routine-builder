@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -134,6 +134,18 @@
           >
         </fieldset>
       </div>
+      <div class="product-search-bar">
+        <label for="productKeywordSearch"
+          >Search products by name or keyword</label
+        >
+        <input
+          id="productKeywordSearch"
+          name="productKeywordSearch"
+          type="search"
+          placeholder="Example: serum, mascara, dry skin"
+          autocomplete="off"
+        />
+      </div>
       <p class="filter-hint">Select all categories you want to browse.</p>
 
       <!-- Products Grid -->
@@ -155,6 +167,12 @@
       <section class="chatbox">
         <h2>Let's Build Your Routine</h2>
         <div id="chatWindow" class="chat-window"></div>
+        <div class="ai-search-controls">
+          <label for="useCurrentInfo">
+            <input id="useCurrentInfo" type="checkbox" /> Include current info
+            mode (request links and citations)
+          </label>
+        </div>
 
         <form id="chatForm" class="chat-form">
           <label for="userInput" class="visually-hidden">Message</label>
@@ -184,6 +202,126 @@
         </nav>
       </footer>
     </div>
+
+    <!-- Google Translate element for RTL language support -->
+    <div id="google_translate_element"></div>
+    <script>
+      // Initialize Google Translate with RTL language support
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement(
+          {
+            pageLanguage: "en",
+            includedLanguages: "en,fr,es,de,it,zh-CN,ja,ar,ko,ru",
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          },
+          "google_translate_element",
+        );
+      }
+
+      // Monitor and update page direction based on language changes
+      const observer = new MutationObserver(() => {
+        const htmlElement = document.documentElement;
+        const currentLang = (htmlElement.getAttribute("lang") || "en").split(
+          "-",
+        )[0];
+
+        // RTL languages: Arabic (ar), Hebrew (he)
+        const rtlLanguages = ["ar", "he"];
+        const isRTL = rtlLanguages.includes(currentLang);
+
+        // Update HTML dir attribute
+        htmlElement.setAttribute("dir", isRTL ? "rtl" : "ltr");
+
+        // Toggle Bootstrap RTL stylesheet
+        const bootstrapLtr = document.getElementById("bootstrap-ltr");
+        const bootstrapRtl = document.getElementById("bootstrap-rtl");
+
+        if (isRTL) {
+          if (bootstrapLtr) bootstrapLtr.disabled = true;
+          if (bootstrapRtl) bootstrapRtl.disabled = false;
+        } else {
+          if (bootstrapLtr) bootstrapLtr.disabled = false;
+          if (bootstrapRtl) bootstrapRtl.disabled = true;
+        }
+
+        window.dispatchEvent(
+          new CustomEvent("app-language-changed", {
+            detail: {
+              lang: currentLang,
+              isRTL,
+            },
+          }),
+        );
+      });
+
+      // Start observing language changes
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["lang"],
+      });
+    </script>
+    <style>
+      /* Position the Google Translate widget - responsive to text direction */
+      #google_translate_element {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 9999;
+        background: white;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      /* In RTL mode, reposition to the left */
+      html[dir="rtl"] #google_translate_element {
+        left: auto;
+        right: 10px;
+      }
+
+      /* Theme toggle button responsive to text direction */
+      html[dir="rtl"] .theme-toggle {
+        right: auto;
+        left: 20px;
+      }
+
+      /* Adjust page wrapper padding for RTL */
+      html[dir="rtl"] .page-wrapper {
+        direction: rtl;
+      }
+
+      /* Message alignment adjustments for RTL */
+      html[dir="rtl"] .msg.user {
+        flex-direction: row;
+      }
+
+      html[dir="rtl"] .msg.user .msg-body {
+        align-items: flex-start;
+      }
+
+      html[dir="rtl"] .msg.ai {
+        flex-direction: row-reverse;
+      }
+
+      /* Adjust form button position for RTL */
+      html[dir="rtl"] .chat-form {
+        flex-direction: row-reverse;
+      }
+
+      /* Adjust logo and header for RTL */
+      html[dir="rtl"] .site-header {
+        direction: rtl;
+      }
+
+      /* Ensure text input remains LTR while form is RTL */
+      html[dir="rtl"] .chat-form input {
+        direction: ltr;
+        text-align: left;
+      }
+    </style>
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <!-- secrets.js can be removed when using Cloudflare Workers for API requests -->
     <script src="secrets.js"></script>
