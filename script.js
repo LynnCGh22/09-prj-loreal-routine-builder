@@ -443,7 +443,9 @@ chatForm.addEventListener("submit", async (e) => {
 
   /* Display the user's question in the chat window */
   chatWindow.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
-  chatWindow.innerHTML += `<p>Connecting to AI service...</p>`;
+  const loadingMessage = document.createElement("p");
+  loadingMessage.textContent = "Connecting with AI Service...";
+  chatWindow.appendChild(loadingMessage);
   const useCurrentInfo = Boolean(useCurrentInfoToggle?.checked);
 
   try {
@@ -471,17 +473,17 @@ chatForm.addEventListener("submit", async (e) => {
     const aiReply = data.choices?.[0]?.message?.content;
 
     if (!aiReply) {
-      chatWindow.innerHTML = `<p>No response received from OpenAI.</p>`;
+      loadingMessage.outerHTML = `<p>No response received from OpenAI.</p>`;
       return;
     }
 
-    chatWindow.innerHTML += `<div><strong>AI:</strong>${formatAiResponseWithLinks(
+    loadingMessage.outerHTML = `<div><strong>AI:</strong>${formatAiResponseWithLinks(
       aiReply,
     )}</div>`;
     userInputElement.value = "";
   } catch (error) {
     console.error("OpenAI request failed:", error);
-    chatWindow.innerHTML = `<p>Sorry, I couldn't connect to OpenAI. Please check your API key and try again.</p>`;
+    loadingMessage.outerHTML = `<p>Sorry, I couldn't connect to OpenAI. Please check your API key and try again.</p>`;
   }
 });
 
