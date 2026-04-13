@@ -489,3 +489,20 @@ if (themeToggle) {
     localStorage.setItem("theme", nextTheme);
   });
 }
+
+async function generateRoutine() {
+  const response = await fetch("https://your-worker-url", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: "user", content: "Build me a skincare routine" }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  console.log(data);
+}
