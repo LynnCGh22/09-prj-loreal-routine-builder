@@ -349,6 +349,49 @@ async function requestChatCompletion(payload) {
   return data;
 }
 
+/* Keep fetching continuation chunks when the model stops because of token length */
+async function requestCompleteAssistantReply(
+  payload,
+  maxContinuationRequests = 2,
+) {
+  const messages = Array.isArray(payload.messages) ? [...payload.messages] : [];
+  let fullReply = "";
+  let finishReason = null;
+
+  for (let attempt = 0; attempt <= maxContinuationRequests; attempt += 1) {
+    const data = await requestChatCompletion({
+      ...payload,
+      messages,
+    });
+
+    const firstChoice = data.choices?.[0];
+    const partialReply = firstChoice?.message?.content?.trim();
+    finishReason = firstChoice?.finish_reason || null;
+
+    if (partialReply) {
+      fullReply += fullReply ? `\n\n${partialReply}` : partialReply;
+      messages.push({ role: "assistant", content: partialReply });
+    }
+
+    if (finishReason !== "length") {
+      break;
+    }
+
+    if (attempt < maxContinuationRequests) {
+      messages.push({
+        role: "user",
+        content:
+          "Continue from where you stopped. Do not repeat previous lines. Finish the routine in the same structure.",
+      });
+    }
+  }
+
+  return {
+    reply: fullReply,
+    finishReason,
+  };
+}
+
 /* Handle select/unselect on click and apply visual highlight */
 productsContainer.addEventListener("click", (e) => {
   const card = e.target.closest(".product-card");
@@ -515,7 +558,7 @@ if (generateRoutineButton) {
         )
         .join("\n");
 
-      const data = await requestChatCompletion({
+      const routineResult = await requestCompleteAssistantReply({
         model: "gpt-4o",
         messages: [
           {
@@ -528,13 +571,13 @@ if (generateRoutineButton) {
             content: `Create a skincare/beauty routine using these selected products:\n${productSummary}\n\nFormat:\n1) Morning\n2) Evening\n3) Quick tips`,
           },
         ],
-        max_tokens: 600,
+        max_tokens: 800,
         temperature: 0.2, // Lower temperature for more focused, deterministic responses
         frequency_penalty: 0.2, // Slightly discourage repetition for more varied responses
         presence_penalty: 0.2, // Slightly encourage diversity for more varied responses
       });
 
-      const aiReply = data.choices?.[0]?.message?.content;
+      const aiReply = routineResult.reply;
 
       if (!aiReply) {
         chatWindow.innerHTML = `<p>No routine was returned. Please try again.</p>`;
@@ -542,6 +585,10 @@ if (generateRoutineButton) {
       }
 
       chatWindow.innerHTML = `<div>${formatResponseAsBullets(aiReply)}</div>`;
+
+      if (routineResult.finishReason === "length") {
+        chatWindow.innerHTML += `<p>Note: The response may still be incomplete. Try selecting fewer products and generate again for a shorter routine.</p>`;
+      }
     } catch (error) {
       console.error("Routine generation failed:", error);
       chatWindow.innerHTML = `<p>Sorry, routine generation failed. Please try again.</p>`;
