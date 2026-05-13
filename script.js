@@ -309,12 +309,17 @@ function updateGenerateRoutineButtonState() {
   );
 }
 
-/* Replace with actual Cloudflare Worker URL when deployed */
-const API_BASE_URL =
-  window.API_BASE_URL || "https://quiet-night-bc46.lchaker921.workers.dev/";
+/* Read the Cloudflare Worker URL from secrets.js */
+const API_BASE_URL = window.API_BASE_URL || "";
 
 /* Send chat-completion requests through Cloudflare Worker so the API key stays server-side */
 async function requestChatCompletion(payload) {
+  if (!API_BASE_URL) {
+    throw new Error(
+      "Missing Cloudflare Worker URL. Set window.API_BASE_URL in secrets.js to your deployed worker endpoint.",
+    );
+  }
+
   const response = await fetch(API_BASE_URL, {
     method: "POST",
     headers: {
@@ -343,6 +348,13 @@ async function requestChatCompletion(payload) {
 
   if (!response.ok) {
     const apiError = data.error?.message || "Unknown API error";
+
+    if (response.status === 401 && /invalid api key/i.test(apiError)) {
+      throw new Error(
+        "The Cloudflare Worker OpenAI key is invalid or missing. Add OPENAI_API_KEY as a Cloudflare secret and redeploy the worker.",
+      );
+    }
+
     throw new Error(apiError);
   }
 
